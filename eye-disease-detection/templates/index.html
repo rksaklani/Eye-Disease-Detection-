@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pediatric Eye Disease Predictor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script> <!-- Include TensorFlow.js -->
+</head>
+<body>
+    <div class="container">
+        <h1>Pediatric Eye Disease Predictor</h1>
+
+        <div class="upload-section">
+           
+            <input  class="upload-btn" type="file" id="imageUpload" accept="image/*" onchange="previewImage()" />
+        </div>
+
+        <div class="image-preview" id="imagePreview">
+            <img src="" alt="Image Preview" class="image" />
+        </div>
+
+        <button class="predict-btn" onclick="predictDisease()">Predict Disease</button>
+
+        <div class="result-section" id="resultSection">
+            <h2>Prediction Result: <span id="result"></span></h2>
+        </div>
+    </div>
+
+    <script>
+        // Show image preview when file is selected
+        function previewImage() {
+            const file = document.getElementById('imageUpload').files[0];
+            const reader = new FileReader();
+
+            reader.onloadend = function () {
+                document.querySelector('.image').src = reader.result;
+                document.getElementById('imagePreview').style.display = 'block';
+            }
+
+            if (file) {
+                reader.readAsDataURL(file);
+            } else {
+                document.querySelector('.image').src = "";
+            }
+        }
+
+        // Predict disease after image is uploaded
+        async function predictDisease() {
+            const fileInput = document.getElementById('imageUpload');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please upload an image first.');
+                return;
+            }
+
+            try {
+                // Create FormData to send the file in the POST request
+                const formData = new FormData();
+                formData.append('file', file);
+
+                // Send the image file to the Flask backend using POST for prediction
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    document.getElementById('result').innerText = result.prediction;
+                    document.getElementById('resultSection').style.display = 'block';
+                } else {
+                    const errorResult = await response.json();
+                    document.getElementById('result').innerText = 'Error: ' + errorResult.error;
+                }
+
+            } catch (error) {
+                console.error('Error during prediction:', error);
+                document.getElementById('result').innerText = 'Error during prediction';
+            }
+        }
+    </script>
+</body>
+</html>
